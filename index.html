@@ -1,8 +1,18 @@
 <html>
 
 <head>
-<script src='https://api.mapbox.com/mapbox-gl-js/v0.47.0/mapbox-gl.js'></script>
-<link href='https://api.mapbox.com/mapbox-gl-js/v0.47.0/mapbox-gl.css' rel='stylesheet' />
+  
+  <meta charset='utf-8' />
+  <title>Eat me!</title>
+  
+  <meta name='viewport' content='initial-scale=1,maximum-scale=1,user-scalable=no' />
+  
+  <script src='https://api.tiles.mapbox.com/mapbox-gl-js/v0.49.0/mapbox-gl.js'></script>
+  <link href='https://api.tiles.mapbox.com/mapbox-gl-js/v0.49.0/mapbox-gl.css' rel='stylesheet' />
+  <style>
+      body { margin:0; padding:0; }
+      #map { position:absolute; top:0; bottom:0; width:100%; }
+  </style>
 
 </head>
 <body>
@@ -11,11 +21,51 @@
 
 <div id='map' style='width: 800px; height: 600px;'></div>
 <script>
-mapboxgl.accessToken = 'pk.eyJ1IjoidGVzdG1hbyIsImEiOiJjamw2bHg5cXcxeWc5M3BxeXFqbHRvbnN1In0.aMDRc9tM4cLAtOZRqdIwhg';
-var map = new mapboxgl.Map({
-container: 'map',
-style: 'mapbox://styles/testmao/cjlv64qn526wh2sqt7i1tfevp'
-});
+    mapboxgl.accessToken = 'pk.eyJ1IjoidGVzdG1hbyIsImEiOiJjamw2bHg5cXcxeWc5M3BxeXFqbHRvbnN1In0.aMDRc9tM4cLAtOZRqdIwhg';
+    var map = new mapboxgl.Map({
+      container: 'map',
+      style: 'mapbox://styles/testmao/cjlv64qn526wh2sqt7i1tfevp'
+    });
+  
+  
+    // pixels the map pans when the up or down arrow is clicked
+    var deltaDistance = 100;
+
+    // degrees the map rotates when the left or right arrow is clicked
+    var deltaDegrees = 25;
+
+    function easing(t) {
+        return t * (2 - t);
+    }
+
+    map.on('load', function() {
+        map.getCanvas().focus();
+
+        map.getCanvas().addEventListener('keydown', function(e) {
+            e.preventDefault();
+            if (e.which === 38) { // up
+                map.panBy([0, -deltaDistance], {
+                    easing: easing
+                });
+            } else if (e.which === 40) { // down
+                map.panBy([0, deltaDistance], {
+                    easing: easing
+                });
+            } else if (e.which === 37) { // left
+                map.easeTo({
+                    bearing: map.getBearing() - deltaDegrees,
+                    easing: easing
+                });
+            } else if (e.which === 39) { // right
+                map.easeTo({
+                    bearing: map.getBearing() + deltaDegrees,
+                    easing: easing
+                });
+            }
+        }, true);
+    });  
+  
+  
 </script>
 
 
