@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="UTF-8">
+    <title>Learn HTML5 Game Development on Zenva.com</title>
+    <style>
+      body {
+        background-color: black;
+      }
+      canvas {
+        background-color: white;
+        width: 100%;
+        max-width: 480px;
+        margin: auto;
+        display: block;
+      }
+    </style>
+  </head>
+  <body>
+    <canvas id="game" width="256" height="256"></canvas>
+    <!-- build with modules: qLite,assets,gameLoop,quadtree,sprite,keyboard -->
+    <script src="lib/kontra.build.min.js"></script>
+    <script src="src/game.js"></script>
+  </body>
+</html>
