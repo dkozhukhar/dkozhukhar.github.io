@@ -3,6 +3,6 @@ dkozhukhar.github.io
 
 My Web Playground
 
-[Kontra Game Engine Playground](../kontra/)
+[Kontra Game Engine Playground](./kontra/)
 
-[Mapbox Playground](../mapbox/)
+[Mapbox Playground](./mapbox/)
