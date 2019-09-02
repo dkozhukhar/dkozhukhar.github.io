@@ -6,6 +6,10 @@
     canvas.width = 600;
     canvas.height = 600;
     var context = canvas.getContext("2d");
+
+    //context.font = "30px Arial";
+    //context.fillText("Hello World", 10, 50);
+
     // exclude-code:start
   let { init, Sprite, GameLoop } = kontra;
   // exclude-code:end
@@ -17,8 +21,8 @@
       type:'asteroid',
       x: x,
       y: y,
-      dx: Math.random() * 4 - 2,
-      dy: Math.random() * 4 - 2,
+      dx: Math.random() * 2 - 1,
+      dy: Math.random() * 2 - 1,
       radius: radius,
 
       render() {
@@ -26,10 +30,35 @@
         this.context.beginPath();  // start drawing a shape
         this.context.arc(this.x, this.y, this.radius, 0, Math.PI*2);
         this.context.stroke();     // outline the circle
+
       }
     });
     sprites.push(asteroid);
   }
+
+  let planetX = kontra.Sprite();
+  function createPlanet(x,y,radius,mass) {
+    let planet = kontra.Sprite({
+      type:'planet',
+      x: x,
+      y: y,
+      dx: 0, // Math.random() * 0.5 - 0.25,
+      dy: 0, // Math.random() * 0.5 - 0.25,
+      radius: radius,
+      mass: mass,  /// would measure attraction power
+
+      render() {
+        this.context.strokeStyle = 'blue';
+        this.context.beginPath();  // start drawing a shape
+        this.context.arc(this.x, this.y, this.radius, 0, Math.PI*2);
+        this.context.stroke();     // outline the circle
+        context.fill(); //fill the circle
+      }
+    });
+    sprites.push(planet);
+    planetX = planet; /// lazy global
+  }
+  createPlanet(300,300,10,0.005);
 
   for (var i = 0; i < 4; i++) {
     createAsteroid(Math.random()*canvas.width,Math.random()*canvas.height,30);
@@ -53,13 +82,19 @@
     return degrees * Math.PI / 180;
   }
 
+
   let ship = kontra.Sprite({
     type:'ship',
-    x: 300,
-    y: 300,
+    x: 150,
+    y: 150,
     width: 6,  // we'll use this later for collision detection
-    rotation: 0,  // 0 degrees is to the right
+    rotation: 120,  // 0 degrees is to the right
     dt: 0,
+    kills: 0,
+    damagetaken: 0,
+    killmod:0,
+    winner: 0,
+
     render() {
       this.context.save();
 
@@ -69,6 +104,7 @@
       this.context.rotate(degreesToRadians(this.rotation));
 
       // draw a right facing triangle
+      this.context.strokeStyle = 'red';
       this.context.beginPath();
       this.context.moveTo(-3, -5);
       this.context.lineTo(12, 0);
@@ -76,6 +112,11 @@
       this.context.closePath();
       this.context.stroke();
       this.context.restore();
+      this.context.fillText("Kills Count:  " + this.kills , 10, 30);
+      this.context.fillText("Damage Taken: " + this.damagetaken , 10, 40);
+      this.context.fillText("Weapon Power: " + this.killmod, 10, 50);
+      if (this.winner == 1)
+        this.context.fillText("!!!!!YOU WIN!!!!!", 300, 250);
     },
     update() {
       // rotate the ship left or right
@@ -91,8 +132,8 @@
       const sin = Math.sin(degreesToRadians(this.rotation));
 
       if (kontra.keyPressed('up')) {
-        this.ddx = cos * 0.05;
-        this.ddy = sin * 0.05;
+        this.ddx = cos * 0.005;
+        this.ddy = sin * 0.005;
       }
       else {
         this.ddx = this.ddy = 0;
@@ -109,62 +150,112 @@
 
       // allow the player to fire no more than 1 bullet every 1/4 second
       this.dt += 1/60;
-      if (kontra.keyPressed('space') && this.dt > 0.25) {
+
+      this.killmod = Math.log10(Math.max(this.kills-this.damagetaken,1)) + 1;
+
+      if (kontra.keyPressed('space') && this.dt > 0.25  ) {
         this.dt = 0;
-        let bullet = kontra.Sprite({
-          type: 'bullet',
-          // start the bullet on the ship at the end of the triangle
-          x: this.x + cos * 12,
-          y: this.y + sin * 12,
-          // move the bullet slightly faster than the ship
-          dx: this.dx + cos * 5,
-          dy: this.dy + sin * 5,
-          // live only 50 frames
-          ttl: 50,
-          // bullets are small
-          width: 2,
-          height: 2,
-          color: 'red'
-        });
-        sprites.push(bullet);
+
+        for (let i=0; i<this.killmod; i++) {
+
+          let bullet = kontra.Sprite({
+            type: 'bullet',
+            // start the bullet on the ship at the end of the triangle
+            x: this.x + cos * 12,
+            y: this.y + sin * 12,
+            // move the bullet slightly faster than the ship
+            dx: this.dx + cos * (2 + this.killmod * Math.random()) ,
+            dy: this.dy + sin * (2 + this.killmod * Math.random()),
+            // live only 50 frames
+            ttl: 50,
+            // bullets are small
+            width: 2,
+            height: 2,
+            color: 'red'
+          });
+          sprites.push(bullet);
+        }
+
+
       }
-
-
     }
   });
 
-  sprites.push(ship);
+  function createShip(){
+
+    ship.init();
+    ship.x = 150;
+    ship.y = 150;
+    ship.width = 6;  // we'll use this later for collision detection
+    ship.rotation = 60;  // 0 degrees is to the right
+    ship.dt = 0;
+
+    sprites.push(ship);
+  }
+
+  createShip();
 
   let loop = GameLoop({  // create the main game loop
     update: function() { // update the game state
 
+      if (!ship.isAlive()) {
+        createShip();
+      }
+
+
+
+
+
       sprites.map(sprite => {
+
+
+
         sprite.update();
 
+        // glue the borders
         if (sprite.x > canvas.width) {
           sprite.x = 0;
+          sprite.dx /= 2;
         }
-
         if (sprite.y > canvas.height) {
           sprite.y = 0;
+          sprite.dy /= 2;
         }
-
         if (sprite.x < 0) {
           sprite.x = canvas.width;
+          sprite.dx /= 2;
         }
-
         if (sprite.y < 0) {
           sprite.y = canvas.height;
+          sprite.dy /= 2;
+        }
+
+
+      // gravity attraction
+        if (sprite.type !== 'planet') {
+          let distanceSquared = (sprite.x - planetX.x)**2 + (sprite.y - planetX.y)**2
+          let distance = Math.sqrt(distanceSquared);
+          let force = planetX.mass / distanceSquared;
+          //sprite.dx += (sprite.x - planetX.x) / distance;
+          sprite.dx += planetX.mass * (-sprite.x + planetX.x) / distance;
+          sprite.dy += planetX.mass * (-sprite.y + planetX.y) / distance;
+
         }
       });
 
+
+
+
+
       // collision detection
       for (let i = 0; i < sprites.length; i++) {
+
         // only check for collision against asteroids
         if (sprites[i].type === 'asteroid') {
+
           for (let j = 0; j < sprites.length; j++) {
             // don't check asteroid vs. asteroid collisions
-            if (i!=j && sprites[j].type !== 'asteroid') {
+            if (i!=j && sprites[j].type !== 'asteroid' && sprites[j].type !== 'planet') {
               let asteroid = sprites[i];
               let sprite = sprites[j];
               // circle vs. circle collision detection
@@ -172,6 +263,17 @@
               let dy = asteroid.y - sprite.y;
               if (Math.sqrt(dx * dx + dy * dy) < asteroid.radius + sprite.width) {
                 asteroid.ttl = 0;
+
+                if (sprite.type === 'bullet')
+                  ship.kills++;
+
+                if (sprite.type === 'ship') {
+                  ship.kills++;
+                  ship.damagetaken += asteroid.radius*3;
+                }
+
+
+
                 if (asteroid.radius > sprite.width)
                   sprite.ttl = 0;
 
@@ -188,6 +290,19 @@
             }
           }
         }
+        let asteroidcount = 0;
+        for (let i = 0; i < sprites.length; i++)
+          if (sprites[i].type === 'asteroid')
+            asteroidcount++;
+
+        if (asteroidcount == 0) {
+          /// there is nothing more to do
+          ship.winner = 1;
+          //alert('GAME OVER!');
+        } else {
+          ship.winner = 0;
+        }
+
       }
 
       sprites = sprites.filter(sprite => sprite.isAlive());
@@ -196,6 +311,11 @@
         sprites.map(sprite => sprite.render());
     }
 
+
+    //var canvas = document.getElementById("myCanvas");
+    //var ctx = canvas.getContext("2d");
+    //context.font = "30px Arial";
+    //context.fillText("Hello World", 10, 50);
 
   });
 
