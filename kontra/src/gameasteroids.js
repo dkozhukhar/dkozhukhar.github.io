@@ -116,7 +116,7 @@
       this.context.fillText("Damage Taken: " + this.damagetaken , 10, 40);
       this.context.fillText("Weapon Power: " + this.killmod, 10, 50);
       if (this.winner == 1)
-        this.context.fillText("!!!!!YOU WIN!!!!!", 300, 250);
+        this.context.fillText("!!!!!CONGRATULATIONS!!!!!YOU WIN!!!!!", 200, 250);
     },
     update() {
       // rotate the ship left or right
@@ -189,6 +189,8 @@
     ship.width = 6;  // we'll use this later for collision detection
     ship.rotation = 60;  // 0 degrees is to the right
     ship.dt = 0;
+    ship.damagetaken = 0;
+    ship.kills = 0;
 
     sprites.push(ship);
   }
