@@ -62,11 +62,101 @@
   }
   createPlanet(300,300,10,0.005);
 
-  for (var i = 0; i < 4; i++) {
-    let xa=Math.random()*canvas.width/4+canvas.width/4*3;
-    let ya=Math.random()*canvas.height;
-    createAsteroid(xa,ya,30);
+  let level=0;
+
+  function moveToNewLevel(){
+    if (ship.winner == 1){
+      ///
+    } else {
+      level++;
+
+      if (level == 1) {
+        for (var i = 0; i < 4; i++) {
+          let xa=Math.random()*canvas.width/4+canvas.width/4*3;
+          let ya=Math.random()*canvas.height;
+          let size = Math.random()*50+5;
+          createAsteroid(xa,ya,size);
+        }
+      }
+      else if (level == 2) {
+        for (var i = 0; i < 6; i++) {
+          let xa=Math.random()*canvas.width/4+canvas.width/4*3;
+          let ya=Math.random()*canvas.height;
+          let size = Math.random()*50+5;
+          createAsteroid(xa,ya,size);
+        }
+      }
+      else if (level == 3) {
+        for (var i = 0; i < 10; i++) {
+          let xa=Math.random()*canvas.width/4+canvas.width/4*3;
+          let ya=Math.random()*canvas.height;
+          let size = Math.random()*50+5;
+          createAsteroid(xa,ya,size);
+        }
+      }
+      else if (level == 4) {
+        for (var i = 0; i < 4; i++) {
+          let xa=Math.random()*canvas.width/4+canvas.width/4*3;
+          let ya=Math.random()*canvas.height;
+          let size = Math.random()*150+5;
+          createAsteroid(xa,ya,size);
+        }
+      }
+      else if (level == 5) {
+        for (var i = 0; i < 6; i++) {
+          let xa=Math.random()*canvas.width/4+canvas.width/4*3;
+          let ya=Math.random()*canvas.height;
+          let size = Math.random()*200+5;
+          createAsteroid(xa,ya,size);
+        }
+      }
+      else if (level == 6) {
+        for (var i = 0; i < 120; i++) {
+          let xa=Math.random()*canvas.width/4+canvas.width/4*3;
+          let ya=Math.random()*canvas.height;
+          let size = Math.random()*20+5;
+          createAsteroid(xa,ya,size);
+        }
+      }
+
+      else if (level == 7) {
+        for (var i = 0; i < 120; i++) {
+          let xa=Math.random()*canvas.width/4+canvas.width/4*3;
+          let ya=Math.random()*canvas.height;
+          let size = Math.random()*20+5;
+          createAsteroid(xa,ya,size);
+        }
+
+      for (var i = 0; i < 6; i++) {
+        let xa=Math.random()*canvas.width/4;
+        let ya=Math.random()*canvas.height;
+        let size = Math.random()*200+5;
+        createAsteroid(xa,ya,size);
+        }
+
+      for (var i = 0; i < 6; i++) {
+        let xa=Math.random()*canvas.width;
+        let ya=Math.random()*canvas.height/4+canvas.height/4*3;
+        let size = Math.random()*150+5;
+        createAsteroid(xa,ya,size);
+        }
+
+      for (var i = 0; i < 10; i++) {
+        let xa=Math.random()*canvas.width;
+        let ya=Math.random()*canvas.height/4;
+        let size = Math.random()*50+5;
+        createAsteroid(xa,ya,size);
+        }
+
+      }
+      else {
+        ship.winner = 1;
+      }
+    }
+
   }
+
+
 
   let spriteX = Sprite({
     x: 100,        // starting x,y position of the sprite
@@ -77,8 +167,8 @@
     dx: 2,          // move the sprite 2px to the right every frame
     dy: 2
   });
-
-  sprites.push(spriteX);
+  /// no mre sprites
+  ///sprites.push(spriteX);
 
   kontra.initKeys();
   // helper function to convert degrees to radians
@@ -121,6 +211,8 @@
       this.context.fillText("Damage Taken: " + this.damagetaken , 10, 40);
       this.context.fillText("Weapon Power: " + this.killmod, 10, 50);
       this.context.fillText("Planet damaged: " + planetX.damagetaken, 10, 60);
+      this.context.fillText("Asteroids Left: " + ship.asteroidleft, 10, 70);
+      this.context.fillText("Level: " + level, 10, 80);
 
       if (this.winner == 1)
         this.context.fillText("!!!!!CONGRATULATIONS!!!!!YOU WIN!!!!!", 200, 250);
@@ -162,7 +254,7 @@
       // allow the player to fire no more than 1 bullet every 1/4 second
       this.dt += 1/60;
 
-      this.killmod = Math.log10(Math.max(this.kills,1)) + 1;
+      this.killmod = Math.log(Math.max(this.kills,1)) + 1;
 
       if (kontra.keyPressed('space') && this.dt > 0.25  ) {
         this.dt = 0;
@@ -206,11 +298,15 @@
     ship.dt = 0;
     ship.damagetaken = 0;
     ship.kills = 0;
+    ship.asteroidleft = 1;
 
     sprites.push(ship);
   }
 
   createShip();
+
+  ///start the game
+  moveToNewLevel();
 
   let loop = GameLoop({  // create the main game loop
     update: function() { // update the game state
@@ -298,7 +394,7 @@
                   sprite.ttl = 0;
 
                 // split the asteroid only if it's large enough
-                if (asteroid.radius > 1) {
+                if (asteroid.radius > 30) {
                   for (var x = 0; x < 3; x++) {
                     createAsteroid(asteroid.x, asteroid.y, asteroid.radius / 2.5);
                   }
@@ -315,9 +411,11 @@
           if (sprites[i].type === 'asteroid')
             asteroidcount++;
 
+        ship.asteroidleft = asteroidcount;
+
         if (asteroidcount == 0) {
           /// there is nothing more to do
-          ship.winner = 1;
+          moveToNewLevel();
           //alert('GAME OVER!');
         } else {
           ship.winner = 0;
