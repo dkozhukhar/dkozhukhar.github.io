@@ -21,8 +21,8 @@
       type:'asteroid',
       x: x,
       y: y,
-      dx: Math.random() * 2 - 1,
-      dy: Math.random() * 2 - 1,
+      dx: (Math.random() * 2 - 1)/2,
+      dy: (Math.random() * 2)/2,
       radius: radius,
 
       render() {
@@ -45,7 +45,9 @@
       dx: 0, // Math.random() * 0.5 - 0.25,
       dy: 0, // Math.random() * 0.5 - 0.25,
       radius: radius,
+      width: radius, ///hack to make collision work simple
       mass: mass,  /// would measure attraction power
+      damagetaken: 0, // how many asteroids damages
 
       render() {
         this.context.strokeStyle = 'blue';
@@ -61,7 +63,9 @@
   createPlanet(300,300,10,0.005);
 
   for (var i = 0; i < 4; i++) {
-    createAsteroid(Math.random()*canvas.width,Math.random()*canvas.height,30);
+    let xa=Math.random()*canvas.width/4+canvas.width/4*3;
+    let ya=Math.random()*canvas.height;
+    createAsteroid(xa,ya,30);
   }
 
   let spriteX = Sprite({
@@ -84,6 +88,7 @@
 
 
   let ship = kontra.Sprite({
+    // all this overridden later function
     type:'ship',
     x: 150,
     y: 150,
@@ -115,6 +120,8 @@
       this.context.fillText("Kills Count:  " + this.kills , 10, 30);
       this.context.fillText("Damage Taken: " + this.damagetaken , 10, 40);
       this.context.fillText("Weapon Power: " + this.killmod, 10, 50);
+      this.context.fillText("Planet damaged: " + planetX.damagetaken, 10, 60);
+
       if (this.winner == 1)
         this.context.fillText("!!!!!CONGRATULATIONS!!!!!YOU WIN!!!!!", 200, 250);
     },
@@ -132,8 +139,12 @@
       const sin = Math.sin(degreesToRadians(this.rotation));
 
       if (kontra.keyPressed('up')) {
-        this.ddx = cos * 0.005;
-        this.ddy = sin * 0.005;
+        this.ddx = cos * 0.003;
+        this.ddy = sin * 0.003;
+      }
+      else if (kontra.keyPressed('down')) {
+        this.ddx = - cos * 0.003;
+        this.ddy = - sin * 0.003;
       }
       else {
         this.ddx = this.ddy = 0;
@@ -151,7 +162,7 @@
       // allow the player to fire no more than 1 bullet every 1/4 second
       this.dt += 1/60;
 
-      this.killmod = Math.log10(Math.max(this.kills-this.damagetaken,1)) + 1;
+      this.killmod = Math.log10(Math.max(this.kills,1)) + 1;
 
       if (kontra.keyPressed('space') && this.dt > 0.25  ) {
         this.dt = 0;
@@ -164,13 +175,15 @@
             x: this.x + cos * 12,
             y: this.y + sin * 12,
             // move the bullet slightly faster than the ship
-            dx: this.dx + cos * (2 + this.killmod * Math.random()) ,
-            dy: this.dy + sin * (2 + this.killmod * Math.random()),
+            // and spread a little
+            dx: this.dx + 2* this.killmod * Math.cos(degreesToRadians(this.rotation + 2*this.killmod* (Math.random()-0.5))),
+            dy: this.dy + 2* this.killmod * Math.sin(degreesToRadians(this.rotation + 2*this.killmod* (Math.random()-0.5))) ,
             // live only 50 frames
             ttl: 50,
             // bullets are small
             width: 2,
             height: 2,
+            power : this.killmod,
             color: 'red'
           });
           sprites.push(bullet);
@@ -184,10 +197,12 @@
   function createShip(){
 
     ship.init();
-    ship.x = 150;
-    ship.y = 150;
+    ship.x = 180;
+    ship.y = 180;
+    ship.dx = 0.5;
+    ship.dy = 0;
     ship.width = 6;  // we'll use this later for collision detection
-    ship.rotation = 60;  // 0 degrees is to the right
+    ship.rotation = 0;  // 0 degrees is to the right
     ship.dt = 0;
     ship.damagetaken = 0;
     ship.kills = 0;
@@ -215,6 +230,7 @@
         sprite.update();
 
         // glue the borders
+        // slow a bit after pass
         if (sprite.x > canvas.width) {
           sprite.x = 0;
           sprite.dx /= 2;
@@ -231,6 +247,7 @@
           sprite.y = canvas.height;
           sprite.dy /= 2;
         }
+
 
 
       // gravity attraction
@@ -257,7 +274,7 @@
 
           for (let j = 0; j < sprites.length; j++) {
             // don't check asteroid vs. asteroid collisions
-            if (i!=j && sprites[j].type !== 'asteroid' && sprites[j].type !== 'planet') {
+            if (i!=j && sprites[j].type !== 'asteroid' ) {
               let asteroid = sprites[i];
               let sprite = sprites[j];
               // circle vs. circle collision detection
@@ -274,9 +291,10 @@
                   ship.damagetaken += asteroid.radius*3;
                 }
 
-
-
-                if (asteroid.radius > sprite.width)
+                if (sprite.type === 'planet') {
+                  sprite.damagetaken += asteroid.radius*3;
+                }
+                else if (asteroid.radius > sprite.width)
                   sprite.ttl = 0;
 
                 // split the asteroid only if it's large enough
