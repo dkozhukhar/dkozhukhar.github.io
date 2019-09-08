@@ -231,12 +231,36 @@
       const sin = Math.sin(degreesToRadians(this.rotation));
 
       if (kontra.keyPressed('up')) {
-        this.ddx = cos * 0.003;
-        this.ddy = sin * 0.003;
+        let big_bullet = kontra.Sprite({
+          type: 'big-bullet',
+          // start the bullet on the ship at the end of the triangle
+          x: this.x + cos * 12,
+          y: this.y + sin * 12,
+          // move the bullet slightly faster than the ship
+          // and spread a little
+          dx: this.dx + 2* this.killmod * Math.cos(degreesToRadians(this.rotation + 2*this.killmod* (Math.random()-0.5))),
+          dy: this.dy + 2* this.killmod * Math.sin(degreesToRadians(this.rotation + 2*this.killmod* (Math.random()-0.5))) ,
+          // live only 50 frames
+          ttl: 50,
+          // bullets are small
+          width: 2,
+          height: 2,
+          radius : this.killmod,
+          power : this.killmod,
+          color: 'red',
+          render() {
+            this.context.strokeStyle = 'black';
+            this.context.beginPath();  // start drawing a shape
+            this.context.arc(this.x, this.y, this.radius, 0, Math.PI*2);
+            this.context.stroke();     // outline the circle
+            context.fill(); //fill the circle
+          }
+        });
+        sprites.push(big_bullet);
       }
       else if (kontra.keyPressed('down')) {
-        this.ddx = - cos * 0.003;
-        this.ddy = - sin * 0.003;
+        this.ddx = - cos * 0.01;
+        this.ddy = - sin * 0.01;
       }
       else {
         this.ddx = this.ddy = 0;
