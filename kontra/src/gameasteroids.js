@@ -11,8 +11,12 @@
     //context.fillText("Hello World", 10, 50);
 
     // exclude-code:start
-  let { init, Sprite, GameLoop } = kontra;
+  let { init, Sprite, GameLoop, initPointer, pointer , onPointerDown, pointerPressed} = kontra;
   // exclude-code:end
+
+  initPointer();
+
+
 
   let sprites = [];
 
@@ -214,8 +218,24 @@
       this.context.fillText("Asteroids Left: " + ship.asteroidleft, 10, 70);
       this.context.fillText("Level: " + level, 10, 80);
 
-      if (this.winner == 1)
-        this.context.fillText("!!!!!CONGRATULATIONS!!!!!YOU WIN!!!!!", 200, 250);
+
+      /// Winning Message
+      if (this.winner == 1) {
+        this.context.fillText("!!!!!CONGRATULATIONS!!!!!!", 200, 250);
+        this.context.fillText("Our Planet got " + planetX.damagetaken + " damage", 200, 270);
+        if (planetX.damagetaken == 0) {
+          this.context.fillText("It is perfect!!!", 200, 290);
+        } else if (planetX.damagetaken < 1000) {
+          this.context.fillText("It is very good!!", 200, 290);
+        } else if (planetX.damagetaken < 6000) {
+          this.context.fillText("It is not so bad!", 200, 290);
+        } else if (planetX.damagetaken < 10000) {
+          this.context.fillText("Well.... Hope we can handle that.", 200, 290);
+        } else {
+          this.context.fillText("We need to start looking for a new Planet soon ... This one is over.", 200, 290);
+        }
+      }
+
     },
     update() {
       // rotate the ship left or right
@@ -226,11 +246,20 @@
         this.rotation += 4
       }
 
+      if(kontra.pointerPressed('left')) {
+        this.rotation = Math.atan( (pointer.y - ship.y)/(+pointer.x - ship.x) )* 180 / Math.PI;
+        if (pointer.x - ship.x < 0) {
+          this.rotation+=180;
+        }
+
+        ///console.log(pointer.y - ship.y, "y", pointer.x - ship.x, "x", this.rotation,"r");
+      }
+
       // move the ship forward in the direction it's facing
       const cos = Math.cos(degreesToRadians(this.rotation));
       const sin = Math.sin(degreesToRadians(this.rotation));
 
-      if (kontra.keyPressed('up')) {
+      if (kontra.keyPressed('up') || kontra.keyPressed('space') || kontra.pointerPressed('left')) {
         let big_bullet = kontra.Sprite({
           type: 'big-bullet',
           // start the bullet on the ship at the end of the triangle
@@ -238,7 +267,7 @@
           y: this.y + sin * 12,
           // move the bullet slightly faster than the ship
           // and spread a little
-          dx: this.dx + 2* this.killmod * Math.cos(degreesToRadians(this.rotation + 2*this.killmod* (Math.random()-0.5))),
+          dx: this.dx + 2 * this.killmod * Math.cos(degreesToRadians(this.rotation + 2*this.killmod* (Math.random()-0.5))),
           dy: this.dy + 2* this.killmod * Math.sin(degreesToRadians(this.rotation + 2*this.killmod* (Math.random()-0.5))) ,
           // live only 50 frames
           ttl: 50,
@@ -257,10 +286,13 @@
           }
         });
         sprites.push(big_bullet);
+
+        /// aaaannd move back
+        this.ddx = - cos * 0.01 * this.killmod;
+        this.ddy = - sin * 0.01 * this.killmod;
       }
       else if (kontra.keyPressed('down')) {
-        this.ddx = - cos * 0.01;
-        this.ddy = - sin * 0.01;
+
       }
       else {
         this.ddx = this.ddy = 0;
@@ -278,9 +310,9 @@
       // allow the player to fire no more than 1 bullet every 1/4 second
       this.dt += 1/60;
 
-      this.killmod = Math.log(Math.max(this.kills,1)) + 1;
+      this.killmod = Math.log10(Math.max(this.kills,1))/20 + 1;
 
-      if (kontra.keyPressed('space') && this.dt > 0.25  ) {
+      if (kontra.keyPressed('down') && this.dt > 0.25  ) {
         this.dt = 0;
 
         for (let i=0; i<this.killmod; i++) {
@@ -369,6 +401,9 @@
         }
 
 
+        if (sprite.type == 'big-bullet'){
+          sprite.radius *= 0.95;
+        }
 
       // gravity attraction
         if (sprite.type !== 'planet') {
@@ -405,6 +440,9 @@
 
                 if (sprite.type === 'bullet')
                   ship.kills++;
+
+                if (sprite.type === 'big-bullet')
+                    ship.kills++;
 
                 if (sprite.type === 'ship') {
                   ship.kills++;
